@@ -120,9 +120,7 @@ vim.api.nvim_create_autocmd('VimEnter', {
 })
 -- Open Neotree automatically when launched
 vim.api.nvim_create_autocmd('VimEnter', {
-  callback = function()
-    vim.cmd('Neotree show')
-  end,
+  callback = function() vim.cmd 'Neotree show' end,
 })
 
 -- Set to true if you have a Nerd Font installed and selected in the terminal
@@ -294,26 +292,41 @@ require('lazy').setup({
   { 'NMAC427/guess-indent.nvim', opts = {} },
 
   {
-    "nvim-neo-tree/neo-tree.nvim",
-    branch = "v3.x",
+    'nvim-neo-tree/neo-tree.nvim',
+    branch = 'v3.x',
     lazy = false,
     dependencies = {
-      "nvim-tree/nvim-web-devicons", -- optional, for file icons
-      "nvim-lua/plenary.nvim",
-      "MunifTanjim/nui.nvim",
+      'nvim-tree/nvim-web-devicons', -- optional, for file icons
+      'nvim-lua/plenary.nvim',
+      'MunifTanjim/nui.nvim',
     },
     config = function()
-      require("neo-tree").setup({
+      require('neo-tree').setup {
         -- add your configuration options here
-      })
+      }
       -- set keymap to toggle neo-tree
       vim.keymap.set('n', '<leader>e', ':Neotree toggle<CR>', { silent = true, desc = 'Toggle File Explorer' })
-    end
+    end,
+  },
+  {
+    'NeogitOrg/neogit',
+    lazy = true,
+    dependencies = {
+      'nvim-lua/plenary.nvim', -- required
+      'sindrets/diffview.nvim', -- optional - Diff integration
+
+      -- Only one of these is needed.
+      'nvim-telescope/telescope.nvim', -- optional
+      'ibhagwan/fzf-lua', -- optional
+      'nvim-mini/mini.pick', -- optional
+      'folke/snacks.nvim', -- optional
+    },
+    cmd = 'Neogit',
+    keys = {
+      { '<leader>gg', '<cmd>Neogit<cr>', desc = 'Show Neogit UI' },
+    },
   },
 
-
-
-  -- Alternatively, use `config = function() ... end` for full control over the configuration.
   -- If you prefer to call `setup` explicitly, use:
   --    {
   --        'lewis6991/gitsigns.nvim',
