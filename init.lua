@@ -90,8 +90,43 @@ P.S. You can delete this when you're done too. It's your config now! :)
 vim.g.mapleader = ' '
 vim.g.maplocalleader = ' '
 
+-- Set tab and indentation options globally
+vim.opt.tabstop = 4 -- A hard tab character (\t) will display as 4 spaces
+vim.opt.shiftwidth = 4 -- The number of spaces used for each step of (auto)indent
+vim.opt.expandtab = true -- Insert spaces when the Tab key is pressed
+vim.opt.softtabstop = 4 -- Number of spaces a <Tab> keypress counts for
+
+vim.opt.equalalways = false
+
+-- Autocommand to change directory to project root
+vim.api.nvim_create_autocmd('BufEnter', {
+  callback = function()
+    -- Look for .git or other root markers
+    local root = vim.fs.find({ '.git', 'package.json', '.root' }, { upward = true })[1]
+    if root then vim.cmd('cd ' .. vim.fn.fnamemodify(root, ':h')) end
+  end,
+})
+
+-- Open a 25% height terminal at the bottom when launched
+vim.api.nvim_create_autocmd('VimEnter', {
+  callback = function()
+    -- Calculate 25% of the total editor height
+    local height = math.floor(vim.o.lines * 0.25)
+    -- Open the terminal in a split at the bottom
+    vim.cmd('botright ' .. height .. 'split | term')
+    -- Optional: Go back to the main window so focus isn't stuck in the terminal
+    vim.cmd 'wincmd k'
+  end,
+})
+-- Open Neotree automatically when launched
+vim.api.nvim_create_autocmd('VimEnter', {
+  callback = function()
+    vim.cmd('Neotree show')
+  end,
+})
+
 -- Set to true if you have a Nerd Font installed and selected in the terminal
-vim.g.have_nerd_font = false
+vim.g.have_nerd_font = true
 
 -- [[ Setting options ]]
 -- See `:help vim.o`
@@ -198,10 +233,10 @@ vim.keymap.set('n', '<leader>q', vim.diagnostic.setloclist, { desc = 'Open diagn
 vim.keymap.set('t', '<Esc><Esc>', '<C-\\><C-n>', { desc = 'Exit terminal mode' })
 
 -- TIP: Disable arrow keys in normal mode
--- vim.keymap.set('n', '<left>', '<cmd>echo "Use h to move!!"<CR>')
--- vim.keymap.set('n', '<right>', '<cmd>echo "Use l to move!!"<CR>')
--- vim.keymap.set('n', '<up>', '<cmd>echo "Use k to move!!"<CR>')
--- vim.keymap.set('n', '<down>', '<cmd>echo "Use j to move!!"<CR>')
+vim.keymap.set('n', '<left>', '<cmd>echo "Use h to move!!"<CR>')
+vim.keymap.set('n', '<right>', '<cmd>echo "Use l to move!!"<CR>')
+vim.keymap.set('n', '<up>', '<cmd>echo "Use k to move!!"<CR>')
+vim.keymap.set('n', '<down>', '<cmd>echo "Use j to move!!"<CR>')
 
 -- Keybinds to make split navigation easier.
 --  Use CTRL+<hjkl> to switch between windows
@@ -257,6 +292,26 @@ rtp:prepend(lazypath)
 require('lazy').setup({
   -- NOTE: Plugins can be added via a link or github org/name. To run setup automatically, use `opts = {}`
   { 'NMAC427/guess-indent.nvim', opts = {} },
+
+  {
+    "nvim-neo-tree/neo-tree.nvim",
+    branch = "v3.x",
+    lazy = false,
+    dependencies = {
+      "nvim-tree/nvim-web-devicons", -- optional, for file icons
+      "nvim-lua/plenary.nvim",
+      "MunifTanjim/nui.nvim",
+    },
+    config = function()
+      require("neo-tree").setup({
+        -- add your configuration options here
+      })
+      -- set keymap to toggle neo-tree
+      vim.keymap.set('n', '<leader>e', ':Neotree toggle<CR>', { silent = true, desc = 'Toggle File Explorer' })
+    end
+  },
+
+
 
   -- Alternatively, use `config = function() ... end` for full control over the configuration.
   -- If you prefer to call `setup` explicitly, use:
@@ -498,7 +553,7 @@ require('lazy').setup({
       -- and language tooling communicate in a standardized fashion.
       --
       -- In general, you have a "server" which is some tool built to understand a particular
-      -- language (such as `gopls`, `lua_ls`, `rust_analyzer`, etc.). These Language Servers
+      -- language (such as `gopls`, `lua-language-server`, `rust_analyzer`, etc.). These Language Servers
       -- (sometimes called LSP servers, but that's kind of like ATM Machine) are standalone
       -- processes that communicate with some "client" - in this case, Neovim!
       --
@@ -593,7 +648,8 @@ require('lazy').setup({
       --  Feel free to add/remove any LSPs that you want here. They will automatically be installed.
       --  See `:help lsp-config` for information about keys and how to configure
       local servers = {
-        -- clangd = {},
+        clangd = {},
+        jdtls = {},
         -- gopls = {},
         -- pyright = {},
         -- rust_analyzer = {},
@@ -614,7 +670,7 @@ require('lazy').setup({
       -- You can press `g?` for help in this menu.
       local ensure_installed = vim.tbl_keys(servers or {})
       vim.list_extend(ensure_installed, {
-        'lua_ls', -- Lua Language server
+        'lua-language-server', -- Lua Language server
         'stylua', -- Used to format Lua code
         -- You can add other tools here that you want Mason to install
       })
@@ -628,7 +684,7 @@ require('lazy').setup({
       end
 
       -- Special Lua Config, as recommended by neovim help docs
-      vim.lsp.config('lua_ls', {
+      vim.lsp.config('lua-language-server', {
         on_init = function(client)
           if client.workspace_folders then
             local path = client.workspace_folders[1].name
@@ -652,7 +708,7 @@ require('lazy').setup({
           Lua = {},
         },
       })
-      vim.lsp.enable 'lua_ls'
+      vim.lsp.enable 'lua-language-server'
     end,
   },
 
@@ -750,7 +806,7 @@ require('lazy').setup({
         -- <c-k>: Toggle signature help
         --
         -- See :h blink-cmp-config-keymap for defining your own keymap
-        preset = 'default',
+        preset = 'super-tab',
 
         -- For more advanced Luasnip keymaps (e.g. selecting choice nodes, expansion) see:
         --    https://github.com/L3MON4D3/LuaSnip?tab=readme-ov-file#keymaps
@@ -765,7 +821,7 @@ require('lazy').setup({
       completion = {
         -- By default, you may press `<c-space>` to show the documentation.
         -- Optionally, set `auto_show = true` to show the documentation after a delay.
-        documentation = { auto_show = false, auto_show_delay_ms = 500 },
+        documentation = { auto_show = true, auto_show_delay_ms = 0 },
       },
 
       sources = {
